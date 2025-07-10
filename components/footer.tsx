@@ -63,24 +63,30 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Newsletter */}
+          {/* Newsletter - Fixed responsive version */}
           <div className="space-y-6">
             <h4 className="text-lg font-medium tracking-wider uppercase">Stay Connected</h4>
             <p className="text-gray-400 text-sm font-light">
               Subscribe for exclusive access to limited editions, private events, and special offers.
             </p>
-            <div className="flex">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="flex-1 px-4 py-3 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-600 border border-gray-700 font-light"
-              />
-              <button className="px-6 py-3 bg-amber-700 hover:bg-amber-800 transition-colors duration-300">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
+            <form className="w-full">
+              <div className="flex flex-col sm:flex-row gap-2 w-full">
+                <input
+                  type="email"
+                  placeholder="Your email address"
+                  className="w-full px-4 py-3 bg-gray-900 text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-amber-600 border border-gray-700 font-light"
+                  required
+                />
+                <button 
+                  type="submit"
+                  className="px-4 py-3 bg-amber-700 hover:bg-amber-800 transition-colors duration-300 flex items-center justify-center whitespace-nowrap min-w-[50px]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
