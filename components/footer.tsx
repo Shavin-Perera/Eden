@@ -3,6 +3,12 @@
 import { useState } from 'react';
 import Link from "next/link";
 import { Facebook, Instagram, Twitter } from "lucide-react";
+import { z } from 'zod';
+
+const NewsletterSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1).max(50).optional(),
+});
 
 export function Footer() {
   const [email, setEmail] = useState('');
@@ -12,8 +18,10 @@ export function Footer() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email) {
-      setMessage({ text: 'Email is required', type: 'error' });
+    // Validate and sanitize input
+    const parsed = NewsletterSchema.safeParse({ email, firstName: 'Subscriber' });
+    if (!parsed.success) {
+      setMessage({ text: 'Invalid email address.', type: 'error' });
       return;
     }
 

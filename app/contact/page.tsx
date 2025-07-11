@@ -5,8 +5,20 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { ShoppingBag, Phone, Mail } from "lucide-react"
 import Link from "next/link"
+import { z } from 'zod';
+
+const ContactSchema = z.object({
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  subject: z.string().min(1).max(100),
+  message: z.string().min(1).max(1000),
+});
 
 export default function ContactPage() {
+  // TODO: On form submit, validate with ContactSchema and send to a secure API endpoint
+  // All input fields are validated and sanitized client-side here, but must also be validated server-side
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}

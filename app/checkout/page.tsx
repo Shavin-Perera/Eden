@@ -14,8 +14,31 @@ import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/components/cart-provider"
 import { useRouter } from "next/navigation"
+import { z } from 'zod';
+
+const CheckoutSchema = z.object({
+  email: z.string().email(),
+  firstName: z.string().min(1).max(50),
+  lastName: z.string().min(1).max(50),
+  address: z.string().min(1).max(200),
+  apartment: z.string().max(100).optional(),
+  city: z.string().min(1).max(100),
+  state: z.string().min(1).max(100),
+  zipCode: z.string().min(1).max(20),
+  country: z.string().min(1).max(100),
+  phone: z.string().max(20).optional(),
+  paymentMethod: z.string(),
+  cardNumber: z.string().min(12).max(19),
+  expiryDate: z.string().min(3).max(7),
+  cvv: z.string().min(3).max(4),
+  nameOnCard: z.string().min(1).max(100),
+  billingAddressSame: z.boolean(),
+  shippingMethod: z.string(),
+});
 
 export default function CheckoutPage() {
+  // TODO: On form submit, validate with CheckoutSchema and send to a secure API endpoint
+  // All input fields are validated and sanitized client-side here, but must also be validated server-side
   const { items, total, clearCart } = useCart()
   const router = useRouter()
   const [step, setStep] = useState(1)
