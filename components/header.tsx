@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,7 +15,7 @@ import { AuthDialog } from "@/components/auth-dialog"
 import { Input } from "@/components/ui/input"
 import { useRouter } from "next/navigation"
 
-export function Header() {
+function HeaderContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -210,5 +210,26 @@ export function Header() {
       <CartSheet open={isCartOpen} onOpenChange={setIsCartOpen} />
       <AuthDialog open={isAuthOpen} onOpenChange={setIsAuthOpen} />
     </header>
+  )
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center justify-between h-20">
+            <div className="text-3xl font-serif tracking-widest text-gray-900">ÉDEN</div>
+            <div className="flex items-center space-x-2">
+              <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   )
 }
