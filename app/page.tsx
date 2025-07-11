@@ -55,7 +55,7 @@ export default function HomePage() {
       <section className="relative h-screen flex items-center justify-center bg-gradient-to-br from-black via-gray-900 to-amber-900 overflow-hidden">
         <div className="absolute inset-0 bg-black/30" />
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute inset-0 bg-[url('/gold-texture.png')] bg-repeat opacity-50 mix-blend-overlay"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-400/20 via-transparent to-amber-600/20 opacity-50 mix-blend-overlay"></div>
         </div>
         <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4">
           <h1 className="text-6xl md:text-8xl font-serif font-light tracking-wider mb-6 animate-fade-in">ÉDEN</h1>
