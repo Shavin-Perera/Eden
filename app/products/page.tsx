@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -77,7 +77,7 @@ const products = [
   },
 ]
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const [filteredProducts, setFilteredProducts] = useState(products)
   const [sortBy, setSortBy] = useState("featured")
   const [categoryFilter, setCategoryFilter] = useState("all")
@@ -296,5 +296,38 @@ export default function ProductsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white">
+        <div className="bg-gradient-to-r from-gray-50 to-amber-50 py-20">
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <div className="h-12 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div className="w-32 h-px bg-gradient-to-r from-transparent via-amber-600 to-transparent mx-auto mb-6" />
+            <div className="h-6 bg-gray-200 rounded animate-pulse max-w-2xl mx-auto"></div>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="border border-gray-100 rounded-lg overflow-hidden">
+                <div className="h-96 bg-gray-200 animate-pulse"></div>
+                <div className="p-6">
+                  <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded animate-pulse mb-4"></div>
+                  <div className="h-3 bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div className="h-6 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
   )
 }
