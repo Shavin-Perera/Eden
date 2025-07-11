@@ -141,24 +141,26 @@ function HeaderContent() {
               </Button>
 
               {isSearchOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-100 shadow-xl rounded-lg p-4 z-50">
-                  <form onSubmit={handleSearch} className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Search our collection..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="flex-1 border-gray-200 focus:border-amber-300"
-                      autoFocus
-                    />
-                    <Button 
-                      type="submit" 
-                      size="sm" 
-                      className="bg-amber-700 hover:bg-amber-800 text-white"
-                    >
-                      Search
-                    </Button>
-                  </form>
+                <div className="fixed sm:absolute left-0 sm:left-auto sm:right-0 top-16 sm:top-full w-full sm:w-80 px-4 sm:px-0 sm:mt-2 z-50">
+                  <div className="bg-white border border-gray-100 shadow-xl rounded-lg p-4 mx-auto max-w-7xl sm:mx-0">
+                    <form onSubmit={handleSearch} className="flex gap-2 w-full">
+                      <Input
+                        type="text"
+                        placeholder="Search our collection..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="flex-1 min-w-0 border-gray-200 focus:border-amber-300"
+                        autoFocus
+                      />
+                      <Button 
+                        type="submit" 
+                        size="sm" 
+                        className="bg-amber-700 hover:bg-amber-800 text-white whitespace-nowrap"
+                      >
+                        Search
+                      </Button>
+                    </form>
+                  </div>
                 </div>
               )}
             </div>
