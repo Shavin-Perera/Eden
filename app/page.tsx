@@ -203,7 +203,7 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
               <div className="relative h-96 overflow-hidden">
                 <Image
-                  src="/women-perfume-category.jpg"
+                  src="https://cdn.pixabay.com/photo/2025/03/12/09/53/fashion-9464657_1280.jpg"
                   alt="Women's Perfumes"
                   width={800}
                   height={600}
@@ -220,7 +220,7 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
               <div className="relative h-96 overflow-hidden">
                 <Image
-                  src="/men-perfume-category.jpg"
+                  src="https://cdn.pixabay.com/photo/2021/10/08/11/56/man-6691158_1280.jpg"
                   alt="Men's Perfumes"
                   width={800}
                   height={600}
@@ -237,7 +237,7 @@ export default function HomePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
               <div className="relative h-96 overflow-hidden">
                 <Image
-                  src="/unisex-perfume-category.jpg"
+                  src="https://cdn.pixabay.com/photo/2020/04/15/01/44/pregnant-5044867_1280.jpg"
                   alt="Unisex Perfumes"
                   width={800}
                   height={600}
