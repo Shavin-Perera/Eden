@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 import { useAuth } from "@/components/auth-provider"
+import { AlertTriangle } from "lucide-react"
 
 interface AuthDialogProps {
   open: boolean
@@ -15,11 +16,16 @@ interface AuthDialogProps {
 
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [isLogin, setIsLogin] = useState(true)
-  const { signIn } = useAuth()
+  const { signIn, isLoading } = useAuth()
 
   const handleSocialLogin = async (provider: "google" | "facebook") => {
-    await signIn(provider)
-    onOpenChange(false)
+    try {
+      await signIn(provider)
+      onOpenChange(false)
+    } catch (error) {
+      console.error('Login failed:', error)
+      // TODO: Show error message to user
+    }
   }
 
   return (
@@ -31,10 +37,28 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           </DialogTitle>
         </DialogHeader>
 
+        {/* Security Warning */}
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg mb-4">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm text-amber-800 font-medium">Demo Mode</p>
+              <p className="text-xs text-amber-700">
+                This is a demonstration with mock authentication. Real authentication will be implemented for production.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-6">
           {/* Social Login */}
           <div className="space-y-3">
-            <Button variant="outline" className="w-full bg-transparent" onClick={() => handleSocialLogin("google")}>
+            <Button 
+              variant="outline" 
+              className="w-full bg-transparent" 
+              onClick={() => handleSocialLogin("google")}
+              disabled={isLoading}
+            >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
@@ -53,14 +77,19 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Continue with Google
+              {isLoading ? "Signing in..." : "Continue with Google"}
             </Button>
 
-            <Button variant="outline" className="w-full bg-transparent" onClick={() => handleSocialLogin("facebook")}>
+            <Button 
+              variant="outline" 
+              className="w-full bg-transparent" 
+              onClick={() => handleSocialLogin("facebook")}
+              disabled={isLoading}
+            >
               <svg className="w-5 h-5 mr-2" fill="#1877F2" viewBox="0 0 24 24">
                 <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
-              Continue with Facebook
+              {isLoading ? "Signing in..." : "Continue with Facebook"}
             </Button>
           </div>
 
@@ -73,23 +102,23 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
             </div>
           </div>
 
-          {/* Email Form */}
-          <form className="space-y-4">
+          {/* Email Form - Disabled for demo */}
+          <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="Enter your email" />
+              <Input id="email" type="email" placeholder="Enter your email" disabled />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" placeholder="Enter your password" />
+              <Input id="password" type="password" placeholder="Enter your password" disabled />
             </div>
             {!isLogin && (
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input id="confirmPassword" type="password" placeholder="Confirm your password" />
+                <Input id="confirmPassword" type="password" placeholder="Confirm your password" disabled />
               </div>
             )}
-            <Button type="submit" className="w-full bg-black hover:bg-gray-800">
+            <Button type="submit" className="w-full bg-black hover:bg-gray-800" disabled>
               {isLogin ? "SIGN IN" : "CREATE ACCOUNT"}
             </Button>
           </form>
@@ -97,8 +126,8 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           <div className="text-center">
             <button
               type="button"
-              className="text-sm text-gray-600 hover:text-black"
               onClick={() => setIsLogin(!isLogin)}
+              className="text-sm text-gray-600 hover:text-gray-900 underline"
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </button>

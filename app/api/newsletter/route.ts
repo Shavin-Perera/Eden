@@ -4,31 +4,54 @@ import { Resend } from 'resend';
 import { EmailTemplate } from '@/components/email-template';
 import { z } from 'zod';
 
-// Simple in-memory rate limiter (per IP, per minute)
+// Improved rate limiter with Redis-like structure (for production, use Redis)
 const rateLimitMap = new Map();
-const RATE_LIMIT = 5; // max 5 requests per minute per IP
+const RATE_LIMIT = 3; // Reduced to 3 requests per minute per IP
+const WINDOW_MS = 60 * 1000; // 1 minute
 
-function isRateLimited(ip: string) {
+function isRateLimited(ip: string): boolean {
   const now = Date.now();
-  const windowMs = 60 * 1000;
   const entry = rateLimitMap.get(ip) || { count: 0, start: now };
-  if (now - entry.start > windowMs) {
+  
+  // Reset window if expired
+  if (now - entry.start > WINDOW_MS) {
     rateLimitMap.set(ip, { count: 1, start: now });
     return false;
   }
+  
+  // Check if limit exceeded
   if (entry.count >= RATE_LIMIT) {
     return true;
   }
+  
+  // Increment counter
   entry.count++;
   rateLimitMap.set(ip, entry);
   return false;
 }
 
-// Zod schema for input validation
+// Clean up old entries periodically (every 5 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap.entries()) {
+    if (now - entry.start > WINDOW_MS) {
+      rateLimitMap.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
+
+// Enhanced Zod schema with stricter validation
 const NewsletterSchema = z.object({
-  email: z.string().email(),
-  firstName: z.string().min(1).max(50).optional(),
+  email: z.string().email().max(254).toLowerCase().trim(),
+  firstName: z.string().min(1).max(50).trim().optional(),
 });
+
+// Sanitize input to prevent XSS
+function sanitizeInput(input: string): string {
+  return input
+    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .trim();
+}
 
 export async function POST(request: Request) {
   const resend = new Resend(process.env.RESEND_API);
@@ -36,14 +59,25 @@ export async function POST(request: Request) {
   try {
     // Validate environment variables
     if (!process.env.MONGO_URI) {
-      throw new Error('MongoDB connection URI is not defined');
+      console.error('MongoDB connection URI is not defined');
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable' },
+        { status: 503 }
+      );
     }
     if (!process.env.RESEND_API) {
-      throw new Error('Resend API key is not defined');
+      console.error('Resend API key is not defined');
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable' },
+        { status: 503 }
+      );
     }
 
-    // Rate limiting
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    // Rate limiting with proper IP detection
+    const forwarded = request.headers.get('x-forwarded-for');
+    const realIp = request.headers.get('x-real-ip');
+    const ip = forwarded?.split(',')[0] || realIp || 'unknown';
+    
     if (isRateLimited(ip)) {
       return NextResponse.json(
         { error: 'Too many requests. Please try again later.' },
@@ -56,20 +90,30 @@ export async function POST(request: Request) {
     const parsed = NewsletterSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid input', details: parsed.error.flatten() },
+        { error: 'Invalid input provided' },
         { status: 400 }
       );
     }
+    
     const { email, firstName = 'Subscriber' } = parsed.data;
+    const sanitizedFirstName = sanitizeInput(firstName);
 
-    // Connect to MongoDB (best practice: use a connection pool in production)
-    const client = new MongoClient(process.env.MONGO_URI);
+    // Connect to MongoDB with connection pooling
+    const client = new MongoClient(process.env.MONGO_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    
     await client.connect();
     const db = client.db('eden_newsletter');
     const collection = db.collection('subscribers');
 
-    // Check for existing subscriber (safe query)
-    const existingSubscriber = await collection.findOne({ email });
+    // Check for existing subscriber with case-insensitive email
+    const existingSubscriber = await collection.findOne({ 
+      email: { $regex: new RegExp(`^${email}$`, 'i') }
+    });
+    
     if (existingSubscriber) {
       await client.close();
       return NextResponse.json(
@@ -78,13 +122,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert new subscriber (sanitized input)
+    // Insert new subscriber with sanitized data
     const result = await collection.insertOne({
-      email,
-      firstName,
+      email: email.toLowerCase(),
+      firstName: sanitizedFirstName,
       subscribedAt: new Date(),
       ipAddress: ip,
-      userAgent: request.headers.get('user-agent') || 'unknown',
+      userAgent: request.headers.get('user-agent')?.substring(0, 500) || 'unknown', // Limit length
+      source: 'website',
     });
 
     // Send email using Resend
@@ -92,7 +137,7 @@ export async function POST(request: Request) {
       from: 'ÉDEN <onboarding@resend.dev>',
       to: [email],
       subject: 'Welcome to ÉDEN Newsletter',
-      react: await Promise.resolve(EmailTemplate({ firstName })),
+      react: await Promise.resolve(EmailTemplate({ firstName: sanitizedFirstName })),
     });
 
     if (error) {
@@ -112,11 +157,10 @@ export async function POST(request: Request) {
       { status: 200 }
     );
   } catch (error: any) {
-    console.error('Newsletter subscription error:', error);
+    console.error('Newsletter subscription error:', error.message);
     return NextResponse.json(
       {
         error: 'An unexpected error occurred',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       { status: 500 }
     );

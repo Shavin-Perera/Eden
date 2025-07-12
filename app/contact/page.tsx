@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,17 +11,91 @@ import Link from "next/link"
 import { z } from 'zod';
 
 const ContactSchema = z.object({
-  firstName: z.string().min(1).max(50),
-  lastName: z.string().min(1).max(50),
-  email: z.string().email(),
+  firstName: z.string().min(1, "First name is required").max(50, "First name must be less than 50 characters"),
+  lastName: z.string().min(1, "Last name is required").max(50, "Last name must be less than 50 characters"),
+  email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
-  subject: z.string().min(1).max(100),
-  message: z.string().min(1).max(1000),
+  subject: z.string().min(1, "Subject is required").max(100, "Subject must be less than 100 characters"),
+  message: z.string().min(1, "Message is required").max(1000, "Message must be less than 1000 characters"),
 });
 
 export default function ContactPage() {
-  // TODO: On form submit, validate with ContactSchema and send to a secure API endpoint
-  // All input fields are validated and sanitized client-side here, but must also be validated server-side
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [submitMessage, setSubmitMessage] = useState("");
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setSubmitMessage("");
+
+    try {
+      // Validate form data
+      const validatedData = ContactSchema.parse(formData);
+      
+      // Submit to API
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(validatedData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send message');
+      }
+
+      setSubmitStatus("success");
+      setSubmitMessage("Thank you! Your message has been sent successfully.");
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
+    } catch (error: any) {
+      if (error instanceof z.ZodError) {
+        // Handle validation errors
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach(err => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      } else {
+        // Handle API errors
+        setSubmitStatus("error");
+        setSubmitMessage(error.message || 'An unexpected error occurred');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -37,61 +114,106 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div>
             <h2 className="text-3xl font-serif font-light tracking-wide mb-8">Personal Consultation</h2>
-            <form className="space-y-6">
+            
+            {/* Status Messages */}
+            {submitStatus === "success" && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-green-800">{submitMessage}</p>
+              </div>
+            )}
+            
+            {submitStatus === "error" && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800">{submitMessage}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-3">
-                  <Label htmlFor="firstName" className="text-gray-700 font-light">First Name</Label>
+                  <Label htmlFor="firstName" className="text-gray-700 font-light">First Name *</Label>
                   <Input 
                     id="firstName" 
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange("firstName", e.target.value)}
                     placeholder="Enter your first name" 
-                    className="border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                    className={`border-gray-300 focus:ring-amber-500 focus:border-amber-500 ${errors.firstName ? 'border-red-500' : ''}`}
                   />
+                  {errors.firstName && (
+                    <p className="text-red-600 text-sm">{errors.firstName}</p>
+                  )}
                 </div>
                 <div className="space-y-3">
-                  <Label htmlFor="lastName" className="text-gray-700 font-light">Last Name</Label>
+                  <Label htmlFor="lastName" className="text-gray-700 font-light">Last Name *</Label>
                   <Input 
                     id="lastName" 
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange("lastName", e.target.value)}
                     placeholder="Enter your last name" 
-                    className="border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                    className={`border-gray-300 focus:ring-amber-500 focus:border-amber-500 ${errors.lastName ? 'border-red-500' : ''}`}
                   />
+                  {errors.lastName && (
+                    <p className="text-red-600 text-sm">{errors.lastName}</p>
+                  )}
                 </div>
               </div>
               <div className="space-y-3">
-                <Label htmlFor="email" className="text-gray-700 font-light">Email</Label>
+                <Label htmlFor="email" className="text-gray-700 font-light">Email *</Label>
                 <Input 
                   id="email" 
                   type="email" 
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="Enter your email" 
-                  className="border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                  className={`border-gray-300 focus:ring-amber-500 focus:border-amber-500 ${errors.email ? 'border-red-500' : ''}`}
                 />
+                {errors.email && (
+                  <p className="text-red-600 text-sm">{errors.email}</p>
+                )}
               </div>
               <div className="space-y-3">
                 <Label htmlFor="phone" className="text-gray-700 font-light">Phone (Optional)</Label>
                 <Input 
                   id="phone" 
                   type="tel" 
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
                   placeholder="Enter your phone number" 
                   className="border-gray-300 focus:ring-amber-500 focus:border-amber-500"
                 />
               </div>
               <div className="space-y-3">
-                <Label htmlFor="subject" className="text-gray-700 font-light">Subject</Label>
+                <Label htmlFor="subject" className="text-gray-700 font-light">Subject *</Label>
                 <Input 
                   id="subject" 
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
                   placeholder="What is this regarding?" 
-                  className="border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                  className={`border-gray-300 focus:ring-amber-500 focus:border-amber-500 ${errors.subject ? 'border-red-500' : ''}`}
                 />
+                {errors.subject && (
+                  <p className="text-red-600 text-sm">{errors.subject}</p>
+                )}
               </div>
               <div className="space-y-3">
-                <Label htmlFor="message" className="text-gray-700 font-light">Message</Label>
+                <Label htmlFor="message" className="text-gray-700 font-light">Message *</Label>
                 <Textarea 
                   id="message" 
+                  value={formData.message}
+                  onChange={(e) => handleInputChange("message", e.target.value)}
                   placeholder="Tell us how we can assist you..." 
-                  className="min-h-32 border-gray-300 focus:ring-amber-500 focus:border-amber-500"
+                  className={`min-h-32 border-gray-300 focus:ring-amber-500 focus:border-amber-500 ${errors.message ? 'border-red-500' : ''}`}
                 />
+                {errors.message && (
+                  <p className="text-red-600 text-sm">{errors.message}</p>
+                )}
               </div>
-              <Button className="w-full bg-amber-700 hover:bg-amber-800 py-6 text-lg tracking-wider shadow-lg transition-all">
-                SEND MESSAGE
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full bg-amber-700 hover:bg-amber-800 py-6 text-lg tracking-wider shadow-lg transition-all disabled:opacity-50"
+              >
+                {isSubmitting ? "SENDING..." : "SEND MESSAGE"}
               </Button>
             </form>
           </div>
