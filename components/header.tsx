@@ -199,7 +199,10 @@ function HeaderContent() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => setIsAuthOpen(true)}
+                onClick={() => {
+                  console.log('Header: Auth button clicked, opening dialog')
+                  setIsAuthOpen(true)
+                }}
                 className="hover:bg-gray-50 text-gray-700"
               >
                 <User className="h-5 w-5" />
